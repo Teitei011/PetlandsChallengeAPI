@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 
 const employeesURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employees';
 const appointmentsURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employee/${employeesId}/appointments. ';
+const INTERVAL = 30; // PUT AT The BEGGINING OF THE FILE
 
 
 // fetch data from the api
@@ -33,7 +34,27 @@ async function getAppointments(employees) {
     return appointments;
 }
 
-// calculate the available times based on the appointments with a half hour interval between each appointment
+// get available time from the id from the appointments
+const availableTimeFromEmployees = (employees, appointments) => {
+    const availableTimes = employees.map((employee, index) => {
+
+        employee = employees.employees[index];
+
+        const startsAt = employee.startsAt;
+        const finishesAt = employee.finishesAt;
+
+        const availableTimes = [];
+        appointments = appointments[index].appointments;
+
+        for (let i = startsAt; i < finishesAt; i += INTERVAL) {
+            if(!appointments.find(appointments => appointments.startsAt === i)) {
+                availableTimes.push(i);
+            }
+
+        }
+    });
+    return availableTimes;
+}
 
 
 
@@ -41,9 +62,10 @@ async function getAppointments(employees) {
 const main = async () => {
     const employees = await getEmployeeData();
     const appointments = await getAppointments(employees);
-    const availableTimes = await getAvailableTimes(appointments);
-    console.log(availableTimes);
-    return availableTimes;
+    const teste = availableTimeFromEmployees(employees, appointments);
+    console.log(teste);
+    // const availableTimes = await getAvailableTimes(appointments);
+    // return availableTimes;
 }
 
 main();
