@@ -4,13 +4,13 @@ import fetch from 'node-fetch';
 
 const employeesURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employees';
 const appointmentsURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employee/${employeesId}/appointments. ';
-const INTERVAL = 30; 
+const INTERVAL = 30;
 
 // Tools
 
 // convert time to minutes
 const convertTimeToMinutes = (time) => {
-    const timeArray = time.split(':');
+    const timeArray = time?.split(':');
     const hours = parseInt(timeArray[0]);
     const minutes = parseInt(timeArray[1]);
     const totalMinutes = hours * 60 + minutes;
@@ -52,48 +52,61 @@ async function getAppointments(employees) {
     return appointments;
 }
 
-// get available times viewing all available appointments from the employees
-const availableTime = (employees, appointments) => {
+
+// go through the appointments (with the time)  and set true in the variable available if the time is not in the appointments
+const getAvailableTime = (employees, appointments) => {
     employees = employees.employees;
 
-    //seeing the available time for each employee
-    const availableTimes = employees.map((employee, index) => {
+    //Create a list of available times with all set to true
+    const timeObject = [];
 
-        employee = employees[index];
-        appointments = appointments[index].appointments;
+    for (let i = 8; i < 18; i++) {
+        for (let j = 0; j < 60; j += 30) {
 
-        const startsAt = employee.startsAt;
-        const finishesAt = employee.finishesAt;
-
-        const availableTimes = [];
-
-        // convert startsAt and finishesAt to minutes 
-        const startsAtMinutes = convertTimeToMinutes(startsAt);
-        const finishesAtMinutes = convertTimeToMinutes(finishesAt);
-
-        //convert startsAt from appointment to minutes
-        const startsAtAppointment = appointments.forEach(appointment => {
-            const startsAtAppointmentMinutes = convertTimeToMinutes(appointment.startsAt);
-            return startsAtAppointmentMinutes;
-        });
-
-        console.log(startsAtAppointment);
-
-        // get the available time
-        for (let i = startsAtMinutes; i < finishesAtMinutes; i += INTERVAL) {
-            // see if the time i is equal to a value in the startsAtAppointmentMinutes, and if it is, add it to the availableTimes array
-            for (let j = 0; j < startsAtAppointment.length; j++) {
-                if (i !== startsAtAppointment[j]) {
-                    availableTimes.push(convertMinutesToTime(i));
-                }
-            }
+            const time = `${i}:${j}`;
+            timeObject.push({ time: time, available: true });
         }
+    }
+
+    // put all appointments into  a single list
+    const appointmentsList = [];
+    appointments.forEach(appointment => {
+        appointment.appointments.forEach(appointment => {
+            appointmentsList.push(appointment.startsAt);
+        });
     });
-    //sort and remove duplicates on availableTimes
-    availableTimes.sort((a, b) => a - b);
-    availableTimes.filter((time, index, self) => self.indexOf(time) === index);
-    return availableTimes;
+
+    // //count the number of repetition in the apointments list and return an object with the time and the number of repetition
+    const appointmentsCount = appointmentsList.reduce((acc, curr) => {
+        if (acc[curr]) acc[curr]++;
+        else acc[curr] = 1;
+        return acc;
+    }, {});
+
+
+    // create a array of object with the number of repetition in the appointments list
+    const appointmentsCountArray = [];
+    for (let key in appointmentsCount) {
+        appointmentsCountArray.push({ time: key, count: appointmentsCount[key] });
+    }
+
+    console.log("Appointments count: ", appointmentsCountArray);
+
+    // go through the appointmentsCountArray and set the available to false in the timeObject if the count is equal to the number of employees
+    appointmentsCountArray.forEach(appointment => {
+        timeObject.forEach(time => {
+            if (time.time === appointment.time) {
+                time.available = false;
+            }
+        });
+    });
+    
+
+
+    console.log(timeObject);
+
 }
+
 
 
 
@@ -101,10 +114,11 @@ const availableTime = (employees, appointments) => {
 const main = async () => {
     const employees = await getEmployeeData();
     const appointments = await getAppointments(employees);
-    const teste = availableTime(employees, appointments);
-    console.log(teste);
-    // const availableTimes = await getAvailableTimes(appointments);
-    // return availableTimes;
+    const availableTimes = getAvailableTime(employees, appointments);
+    // const employeesAvailable = getNumberOfEmployeesAvailable(availableTimes);
+
+    // console.log(availableTimes);
+    return availableTimes;
 }
 
 main();
