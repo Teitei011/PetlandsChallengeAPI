@@ -4,8 +4,11 @@ import fetch from 'node-fetch';
 
 const employeesURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employees';
 const appointmentsURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employee/${employeesId}/appointments. ';
-const INTERVAL = 30;
 
+
+const INTERVAL = 30;
+const INITIAL_TIME = '08:00';
+const FINAL_TIME = '18:00';
 // Tools
 
 // convert time to minutes
@@ -57,15 +60,13 @@ async function getAppointments(employees) {
 const getAvailableTime = (employees, appointments) => {
     employees = employees.employees;
 
-    //Create a list of available times with all set to true
-    const timeObject = [];
-
-    for (let i = 8; i < 18; i++) {
-        for (let j = 0; j < 60; j += 30) {
-
-            const time = `${i}:${j}`;
-            timeObject.push({ time: time, available: true });
-        }
+    // create a list with all the times from the initial time to the final time with a half hour interval
+    const initialTimeArray = [];
+    const initialTime = convertTimeToMinutes(INITIAL_TIME);
+    const finalTime = convertTimeToMinutes(FINAL_TIME);
+    const interval = INTERVAL;
+    for (let i = initialTime; i <= finalTime; i += interval) {
+        initialTimeArray.push(i);
     }
 
     // put all appointments into  a single list
@@ -76,37 +77,22 @@ const getAvailableTime = (employees, appointments) => {
         });
     });
 
-    // //count the number of repetition in the apointments list and return an object with the time and the number of repetition
-    const appointmentsCount = appointmentsList.reduce((acc, curr) => {
-        if (acc[curr]) acc[curr]++;
-        else acc[curr] = 1;
-        return acc;
-    }, {});
+//create a matrix with the times and the number of repetitions for this time with the appointmentsList
+    const availableTimes = [];
+    initialTimeArray.forEach(time => {
+        const timeAppointments = appointmentsList.filter(appointment => {
+            return convertTimeToMinutes(appointment) === time;
+        });
 
-
-    // create a array of object with the number of repetition in the appointments list
-    const appointmentsCountArray = [];
-    for (let key in appointmentsCount) {
-        appointmentsCountArray.push({ time: key, count: appointmentsCount[key] });
-    }
-
-    console.log("Appointments count: ", appointmentsCountArray);
-
-    // go through the appointmentsCountArray and set the available to false in the timeObject if the count is equal to the number of employees
-    appointmentsCountArray.forEach(appointment => {
-        if ( appointment.count === employees.length) {
-            timeObject.forEach(time => {
-                if (time.time === appointment.time) {
-                    time.available = false;
-                }
-            });
+        if( timeAppointments.length < employees.length){
+             time = convertMinutesToTime(time);
+            availableTimes.push(time);
         }
+            
     });
 
-    // returning only the time values that have true on the available property
-    const availableTimes = timeObject.filter(time => {if (time.available === true) return time.time});
-    console.log("Available times: ", availableTimes);
     return availableTimes;
+    // returning only the time values that have true on the available property
 }
 
 
