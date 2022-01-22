@@ -6,10 +6,12 @@ const employeesURL = 'https://api-homolog.geracaopet.com.br/api/challenges/chall
 const appointmentsURL = 'https://api-homolog.geracaopet.com.br/api/challenges/challenge1/employee/${employeesId}/appointments. ';
 
 
+// IMUTABLE VARIABLES
 const INTERVAL = 30;
 const INITIAL_TIME = '08:00';
 const FINAL_TIME = '18:00';
-// Tools
+
+//                          Tools (Acho que seria necessário colocar em um arquivo separado)
 
 // convert time to minutes
 const convertTimeToMinutes = (time) => {
@@ -23,7 +25,8 @@ const convertTimeToMinutes = (time) => {
 // convert minutes to time
 const convertMinutesToTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
-    const minutesLeft = minutes % 60;
+    let minutesLeft = minutes % 60;
+    if (minutesLeft == "0") minutesLeft = '00';
     const time = `${hours}:${minutesLeft}`;
     return time;
 }
@@ -56,43 +59,49 @@ async function getAppointments(employees) {
 }
 
 
-// go through the appointments (with the time)  and set true in the variable available if the time is not in the appointments
-const getAvailableTime = (employees, appointments) => {
-    employees = employees.employees;
-
-    // create a list with all the times from the initial time to the final time with a half hour interval
-    const initialTimeArray = [];
+// create a list with all the possible time from the initial time to the final time with a half hour interval
+const createTimeList = () => {
+    const timeList = [];
     const initialTime = convertTimeToMinutes(INITIAL_TIME);
     const finalTime = convertTimeToMinutes(FINAL_TIME);
     const interval = INTERVAL;
-    for (let i = initialTime; i <= finalTime; i += interval) {
-        initialTimeArray.push(i);
-    }
+    for (let i = initialTime; i <= finalTime; i += interval)timeList.push(i);
+    return timeList;
+}
 
-    // put all appointments into  a single list
+// put all appointments into  a single list
+const createAppointmentsList = (appointments) => {
     const appointmentsList = [];
     appointments.forEach(appointment => {
         appointment.appointments.forEach(appointment => {
             appointmentsList.push(appointment.startsAt);
         });
     });
+    return appointmentsList;
+}
 
-//create a matrix with the times and the number of repetitions for this time with the appointmentsList
+// go through the appointments (with the time)  and set true in the variable available if the time is not in the appointments
+const getAvailableTime = (employees, appointments) => {
+    employees = employees.employees;
+
+    const initialTimeArray = createTimeList();
+    const appointmentsList = createAppointmentsList(appointments);
+
     const availableTimes = [];
+
     initialTimeArray.forEach(time => {
+        // Count the number of times that the time is in the appointments list
         const timeAppointments = appointmentsList.filter(appointment => {
             return convertTimeToMinutes(appointment) === time;
         });
-
-        if( timeAppointments.length < employees.length){
-             time = convertMinutesToTime(time);
+        // if the timeAppointments.lenght is equal than the number of the employees, 
+        //it means that all employees are occupied at that time
+        if (timeAppointments.length < employees.length) {
+            time = convertMinutesToTime(time);
             availableTimes.push(time);
         }
-            
     });
-
     return availableTimes;
-    // returning only the time values that have true on the available property
 }
 
 
@@ -107,9 +116,6 @@ const main = async () => {
     const employees = await getEmployeeData();
     const appointments = await getAppointments(employees);
     const availableTimes = getAvailableTime(employees, appointments);
-    // const employeesAvailable = getNumberOfEmployeesAvailable(availableTimes);
-
-    // console.log(availableTimes);
     return availableTimes;
 }
 
