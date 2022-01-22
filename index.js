@@ -94,18 +94,24 @@ const getAvailableTime = (employees, appointments) => {
 
     // go through the appointmentsCountArray and set the available to false in the timeObject if the count is equal to the number of employees
     appointmentsCountArray.forEach(appointment => {
-        timeObject.forEach(time => {
-            if (time.time === appointment.time) {
-                time.available = false;
-            }
-        });
+        if ( appointment.count === employees.length) {
+            timeObject.forEach(time => {
+                if (time.time === appointment.time) {
+                    time.available = false;
+                }
+            });
+        }
     });
-    
 
-
-    console.log(timeObject);
-
+    // returning only the time values that have true on the available property
+    const availableTimes = timeObject.filter(time => {if (time.available === true) return time.time});
+    console.log("Available times: ", availableTimes);
+    return availableTimes;
 }
+
+
+
+
 
 
 
