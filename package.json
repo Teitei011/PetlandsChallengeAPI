@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run": "node index.js"
   },
   "keywords": [],
   "author": "Stefan Taiguara",

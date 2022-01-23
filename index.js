@@ -7,7 +7,7 @@ const appointmentsURL = 'https://api-homolog.geracaopet.com.br/api/challenges/ch
 
 
 // IMUTABLE VARIABLES
-const INTERVAL = 30;
+const INTERVAL = 30; // minutes
 const INITIAL_TIME = '08:00';
 const FINAL_TIME = '18:00';
 
@@ -88,14 +88,14 @@ const getAvailableTime = (employees, appointments) => {
     const appointmentsList = createAppointmentsList(appointments);
 
     const availableTimes = [];
-
     initialTimeArray.forEach(time => {
-        // Count the number of times that the time is in the appointments list
+        // Count the number of occurences that the time is in the appointments list
         const timeAppointments = appointmentsList.filter(appointment => {
             return convertTimeToMinutes(appointment) === time;
         });
+
         // if the timeAppointments.lenght is equal than the number of the employees, 
-        //it means that all employees are occupied at that time
+        //it means that all employees are occupied at that time, 
         if (timeAppointments.length < employees.length) {
             time = convertMinutesToTime(time);
             availableTimes.push(time);
@@ -103,13 +103,6 @@ const getAvailableTime = (employees, appointments) => {
     });
     return availableTimes;
 }
-
-
-
-
-
-
-
 
 // main function
 const main = async () => {
